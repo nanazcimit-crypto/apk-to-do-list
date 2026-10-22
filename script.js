@@ -12,24 +12,24 @@ const alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2
 alarmSound.preload = 'auto';
 
 // Minta Izin Notifikasi Browser
-notificationButton.addEventListener("click", async () => {
-  if (!("Notification" in window)) {
-    alert("Perangkat atau browser tidak mendukung notifikasi.");
-    return;
-  }
-
-  const permission = await Notification.requestPermission();
-  if (permission === "granted") {
-    notificationButton.title = "Notifikasi & Getaran Aktif";
-    alarmSound.play().catch(() => {});
-    alarmSound.pause();
-    alarmSound.currentTime = 0;
-    alert("Berhasil! Izin notifikasi, suara, dan getaran diaktifkan.");
-    checkTaskReminders();
-  } else {
-    alert("Izin notifikasi ditolak. Periksa pengaturan browser Anda.");
-  }
-});
+// Aktifkan Notifikasi, Suara, dan Getaran (Aman untuk WebView Android / Kodular)
+if (notificationButton) {
+    notificationButton.addEventListener("click", () => {
+        try {
+            // Langsung aktifkan alarm suara dan getar internal TaskKita tanpa memanggil browser notification API
+            alarmSound.play().catch(() => {});
+            
+            if ("vibrate" in navigator) {
+                navigator.vibrate([200, 100, 200]); // Efek getar HP
+            }
+            
+            notificationButton.title = "Notifikasi & Getaran Aktif";
+            alert("Sistem Alarm & Getar internal TaskKita berhasil diaktifkan!");
+        } catch (e) {
+            alert("Alarm internal siap mengingatkan tugasmu.");
+        }
+    });
+}
 
 // Cek Reminder Tugas Berkala sesuai Waktu Tenggat
 function checkTaskReminders() {
