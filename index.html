@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TaskKita - Dashboard & Task Manager</title>
+    <!-- FontAwesome Icons -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- Hubungkan ke file CSS -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- HALAMAN LOGIN -->
+    <div class="login-overlay hidden" id="loginOverlay">
+      <div class="login-card">
+        <div class="login-logo"><i class="fas fa-check-double"></i></div>
+        <div class="login-title">Selamat Datang di TaskKita</div>
+        <div class="login-subtitle">Masukkan identitas Anda untuk mulai mengelola tugas harian.</div>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label>Nama Lengkap</label>
+            <input type="text" id="loginNameInput" placeholder="Contoh: Sendy Rahmania" required />
+          </div>
+          <div class="form-group">
+            <label>Email Anda</label>
+            <input type="email" id="loginEmailInput" placeholder="nama@email.com" required />
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;">Mulai Masuk</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="app-wrapper">
+      <!-- SIDEBAR NAVIGASI KIRI (Desktop View) -->
+      <aside class="nav-sidebar">
+        <div>
+          <div class="logo-area">
+            <i class="fas fa-check-double"></i> TaskKita
+          </div>
+          <ul class="nav-menu">
+            <li class="nav-item active" id="navDashboard">
+              <a href="#" onclick="switchView('dashboard'); return false;">
+                <i class="fas fa-home"></i> Dashboard
+              </a>
+            </li>
+            <li class="nav-item" id="navCalendar">
+              <a href="#" onclick="switchView('calendar'); return false;">
+                <i class="fas fa-calendar-alt"></i> Tampilan Kalender
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#" onclick="openProfileModal(); return false;">
+                <i class="fas fa-user-circle"></i> Profil Saya
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted); text-align: center;">
+          TaskKita v3.2 &bull; Mobile Ready
+        </div>
+      </aside>
+
+      <!-- KONTEN UTAMA (Tengah) -->
+      <main class="main-content">
+        <header class="header">
+          <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Cari tugas secara cepat..." oninput="handleSearch(this.value)" />
+          </div>
+          <div class="header-icons">
+            <!-- TOMBOL SAKELAR KALENDER (Dioptimalkan khusus Tampilan HP) -->
+            <button class="icon-btn" id="mobileViewToggle" onclick="toggleMobileView()" title="Beralih Tampilan Dashboard / Kalender">
+              <i class="fas fa-calendar-alt" id="viewToggleIcon"></i>
+            </button>
+            <!-- SAKELAR DARK MODE -->
+            <button class="icon-btn" id="darkModeToggle" onclick="toggleDarkMode()" title="Ubah Mode Gelap/Terang">
+              <i class="fas fa-moon" id="darkModeIcon"></i>
+            </button>
+            <!-- TOMBOL IJIN NOTIFIKASI -->
+            <button class="icon-btn" id="enableNotifications" type="button" title="Aktifkan Notifikasi, Suara & Getaran">
+              <i class="fas fa-bell"></i>
+              <span class="notification-dot"></span>
+            </button>
+            <button class="icon-btn" onclick="openProfileModal()" title="Profil Pengguna">
+              <i class="fas fa-user"></i>
+            </button>
+          </div>
+        </header>
+
+        <!-- AREA DASHBOARD & LIST VIEW -->
+        <div id="listViewArea">
+          <section class="dashboard-grid">
+            <div class="dash-card">
+              <span class="dash-card-title">Tugas Tertunda</span>
+              <span class="dash-card-value" id="dashPending">0</span>
+            </div>
+            <div class="dash-card">
+              <span class="dash-card-title">Selesai</span>
+              <span class="dash-card-value" id="dashCompleted">0</span>
+            </div>
+            <div class="dash-card">
+              <span class="dash-card-title">Total Keseluruhan</span>
+              <span class="dash-card-value" id="dashTotal">0</span>
+            </div>
+          </section>
+
+          <div class="title-section">
+            <div>
+              <div class="greeting" id="greeting">Selamat Datang</div>
+              <h1>Anda punya <span class="task-count" id="taskCount">0</span> tugas tertunda</h1>
+            </div>
+            <button class="add-btn" onclick="openModal()">
+              <i class="fas fa-plus"></i> Tambah Tugas
+            </button>
+          </div>
+
+          <!-- SECTION ON HOLD -->
+          <div class="section">
+            <div class="section-header"><h2>Daftar Tugas (On Hold)</h2></div>
+            <div id="onHoldTasks"></div>
+          </div>
+
+          <!-- SECTION COMPLETED -->
+          <div class="section">
+            <div class="section-header">
+              <h2>Selesai</h2>
+              <span class="badge badge-inactive">Arsip</span>
+            </div>
+            <div id="completedTasks"></div>
+          </div>
+        </div>
+
+        <!-- AREA KALENDER INTERAKTIF -->
+        <div class="calendar-container" id="calendarViewArea">
+          <div class="calendar-header">
+            <h2 id="calendarMonthYear">Bulan Tahun</h2>
+            <div class="action-btn-group">
+              <button class="icon-btn" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+              <button class="icon-btn" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+            </div>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+      </main>
+
+      <!-- SIDEBAR KANAN -->
+      <aside class="right-sidebar">
+        <h3 class="sidebar-title">Ringkasan Statistik</h3>
+        
+        <div class="stat-card">
+          <div class="stat-label">Tingkat Penyelesaian</div>
+          <div class="stat-value" id="completionRateValue">0%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="completionProgress" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Total Tugas Tersimpan</div>
+          <div class="stat-value" id="totalTasks">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Prioritas Kritis</div>
+          <div class="stat-value" id="criticalCount" style="color: #dc2626;">0</div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- MODAL TAMBAH / EDIT TUGAS -->
+    <div class="modal" id="taskModal">
+      <div class="modal-content">
+        <h2 class="modal-header">Formulir Tugas</h2>
+        <form id="taskForm">
+          <div class="form-group">
+            <label>Judul Tugas</label>
+            <input type="text" id="taskTitle" placeholder="Contoh: Menyelesaikan bab 3..." required />
+          </div>
+          <div class="form-group">
+            <label>Kategori Tugas</label>
+            <select id="taskCategory">
+              <option value="academic">🎓 Akademik / Sekolah</option>
+              <option value="coding">💻 Coding / Proyek</option>
+              <option value="personal">🏠 Pribadi</option>
+              <option value="other">📌 Lainnya</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="taskStatus">
+              <option value="pending">Pending</option>
+              <option value="progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Prioritas</label>
+            <select id="taskPriority">
+              <option value="minor">Minor</option>
+              <option value="normal">Normal</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="taskReminder">Tanggal & Waktu Reminder</label>
+            <input type="datetime-local" id="taskReminder" required />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan Tugas</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL HALAMAN PROFIL PENGGUNA -->
+    <div class="modal" id="profileModal">
+      <div class="modal-content">
+        <div class="profile-header-center">
+          <div class="profile-avatar-large" id="profileAvatarText">US</div>
+          <div class="profile-name" id="displayUserName">Pengguna</div>
+          <div class="profile-role">Productivity Enthusiast</div>
+        </div>
+
+        <div class="profile-info-grid">
+          <div class="profile-info-box">
+            <div class="profile-info-label">Tugas Selesai</div>
+            <div class="profile-info-val" id="profileCompletedCount">0</div>
+          </div>
+          <div class="profile-info-box">
+            <div class="profile-info-label">Total Dibuat</div>
+            <div class="profile-info-val" id="profileTotalCount">0</div>
+          </div>
+        </div>
+
+        <form id="profileForm" onsubmit="saveProfile(event)">
+          <div class="form-group">
+            <label>Nama Pengguna</label>
+            <input type="text" id="profileNameInput" required />
+          </div>
+          <div class="form-group">
+            <label>Email / Kontak</label>
+            <input type="email" id="profileEmailInput" required />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">Tutup</button>
+            <button type="submit" class="btn btn-primary">Simpan Profil</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL POP-UP NOTIFIKASI TENGGAT TIBA -->
+<div class="modal" id="alarmModal">
+  <div class="modal-content" style="text-align: center; border: 3px solid var(--accent);">
+    <div style="font-size: 50px; color: var(--accent); margin-bottom: 10px;">⏰</div>
+    <h2 class="modal-header" style="margin-bottom: 10px;">Tenggat Waktu Tiba!</h2>
+    <p id="alarmTaskTitle" style="font-size: 16px; font-weight: 600; margin-bottom: 20px; color: var(--text-main);"></p>
+    <div class="modal-actions" style="justify-content: center;">
+      <button type="button" class="btn btn-primary" onclick="stopAlarmModal()" style="width: 100%; padding: 12px;">
+        <i class="fas fa-check-circle"></i> Saya Mengerti & Matikan Alarm
+      </button>
+    </div>
+  </div>
+</div>
+
+    <!-- Hubungkan ke file JavaScript -->
+    <script src="script.js"></script>
+  </body>
+</html>
