@@ -235,7 +235,10 @@
             <div class="profile-info-val" id="profileTotalCount">0</div>
           </div>
         </div>
-
+<form id="profileForm" onsubmit="saveProfile(event)">
+<button type="button" class="btn" style="background: #fee2e2; color: #dc2626; width: 100%; margin-top: 10px;" onclick="handleLogout()">
+    <i class="fas fa-sign-out-alt"></i> Keluar (Log Out)
+</button>
         <form id="profileForm" onsubmit="saveProfile(event)">
           <div class="form-group">
             <label>Nama Pengguna</label>

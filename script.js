@@ -176,7 +176,25 @@ function handleLogin(e) {
   updateGreeting();
   renderTasks();
 }
+function handleLogout() {
+    if (confirm("Apakah Anda yakin ingin keluar dari akun ini?")) {
+        // Hapus data sesi profil dari localStorage
+        localStorage.removeItem("taskkita_profile");
+        
+        // Reset variabel global profil
+        userProfile = { name: "", email: "" };
+        
+        // Tutup modal profil jika sedang terbuka
+        closeProfileModal();
+        
+        // Tampilkan kembali overlay login
+        document.getElementById("loginOverlay").classList.remove("hidden");
+        
+        // Reset form login
+        document.getElementById("loginForm").reset();
+    }
 
+      }
 function applyProfileData() {
   document.getElementById("profileNameInput").value = userProfile.name;
   document.getElementById("profileEmailInput").value = userProfile.email;
