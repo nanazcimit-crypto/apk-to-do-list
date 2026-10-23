@@ -1,7 +1,4 @@
 let tasks = [], editingId = null;
-let alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-alarmSound.preload = 'auto';
-let alarmInterval = null; // Penampung interval getar
 let searchQuery = "";
 let userProfile = { name: "", email: "" };
 let currentCalendarDate = new Date();
@@ -57,43 +54,14 @@ function checkTaskReminders() {
     });
   });
 }
-// 2. Mainkan Suara Alarm Terus-menerus
-      alarmSound.loop = true;
-      alarmSound.play().catch(err => console.log("Audio play error:", err));
-
-      // 3. GETARAN BERULANG TERUS-MENERUS (Sinkron dengan Alarm)
-      if ("vibrate" in navigator) {
-        // Hentikan interval sebelumnya jika ada agar tidak tumpang tindih
-        if (alarmInterval) clearInterval(alarmInterval);
-        
-        // Pola getar: getar 500ms, jeda 200ms, getar 500ms, jeda 800ms
-        // Dijalankan berulang setiap 2 detik
-        navigator.vibrate([500, 200, 500, 800]);
-        alarmInterval = setInterval(() => {
-          navigator.vibrate([500, 200, 500, 800]);
-        }, 2000);
-      }
-
-      // 4. TAMPILKAN JENDELA POP-UP INTERNAL APLIKASI
-      showAlarmModal(task.title);
       // 2. PICU NOTIFIKASI INTERNAL WEB (Suara Alarm Berulang & Vibrasi HP)
-     // Mainkan Suara
-      alarmSound.loop = true;
+      alarmSound.loop = true; // Alarm berbunyi terus sampai dimatikan
       alarmSound.play().catch(err => console.log("Audio play error:", err));
 
-      // Jalankan Getar Berulang
       if ("vibrate" in navigator) {
-        if (alarmInterval !== null) clearInterval(alarmInterval); // Bersihkan dulu kalau ada sisa
-        
-        navigator.vibrate([500, 200, 500, 800]); // Getar awal
-        alarmInterval = setInterval(() => {
-          navigator.vibrate([500, 200, 500, 800]); // Ulangi tiap 2 detik
-        }, 2000);
+        navigator.vibrate([600, 200, 600, 200, 600]);
       }
 
-      showAlarmModal(task.title);
-      task.reminderSent = true;
-      changed = true;
       // 3. TAMPILKAN JENDELA POP-UP MODAL INTERNAL DI DALAM WEB
       showAlarmModal(task.title);
 
@@ -115,32 +83,17 @@ function showAlarmModal(title) {
 }
 
 function stopAlarmModal() {
-  // 1. Matikan Suara Alarm
   alarmSound.pause();
   alarmSound.currentTime = 0;
-  alarmSound.loop = false; // Matikan loop audio
-
-  // 2. BERSIHKAN TOTAL INTERVAL GETAR (Penyebab utama getar tidak mau berhenti)
-  if (alarmInterval !== null) {
-    clearInterval(alarmInterval);
-    alarmInterval = null;
-  }
-
-  // 3. Matikan Getaran secara Paksa lewat API Browser
-  if ("vibrate" in navigator) {
-    navigator.vibrate(0); // Angka 0 berfungsi untuk menghentikan seluruh getaran aktif
-  }
-
-  // 4. Sembunyikan Pop-up Modal di Layar
-  const modal = document.getElementById("alarmModal");
-  if (modal) {
-    modal.classList.remove("active");
-  }
+  const alarmModalElem = document.getElementById("alarmModal");
+  if (alarmModalElem) alarmModalElem.classList.remove("active");
 }
-
-  // 4. Tutup jendela pop-up modal di layar
+function stopAlarmModal() {
+  alarmSound.pause();
+  alarmSound.currentTime = 0;
   document.getElementById("alarmModal").classList.remove("active");
 }
+
 // Beralih Tampilan khusus Pengguna HP (via Tombol Header Atas)
 function toggleMobileView() {
   if (currentView === "dashboard") {
