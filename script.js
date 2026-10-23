@@ -1,4 +1,5 @@
 let tasks = [], editingId = null;
+let alarmInterval = null; // Untuk menampung interval getar
 let searchQuery = "";
 let userProfile = { name: "", email: "" };
 let currentCalendarDate = new Date();
@@ -54,6 +55,25 @@ function checkTaskReminders() {
     });
   });
 }
+// 2. Mainkan Suara Alarm Terus-menerus
+      alarmSound.loop = true;
+      alarmSound.play().catch(err => console.log("Audio play error:", err));
+
+      // 3. GETARAN BERULANG TERUS-MENERUS (Sinkron dengan Alarm)
+      if ("vibrate" in navigator) {
+        // Hentikan interval sebelumnya jika ada agar tidak tumpang tindih
+        if (alarmInterval) clearInterval(alarmInterval);
+        
+        // Pola getar: getar 500ms, jeda 200ms, getar 500ms, jeda 800ms
+        // Dijalankan berulang setiap 2 detik
+        navigator.vibrate([500, 200, 500, 800]);
+        alarmInterval = setInterval(() => {
+          navigator.vibrate([500, 200, 500, 800]);
+        }, 2000);
+      }
+
+      // 4. TAMPILKAN JENDELA POP-UP INTERNAL APLIKASI
+      showAlarmModal(task.title);
       // 2. PICU NOTIFIKASI INTERNAL WEB (Suara Alarm Berulang & Vibrasi HP)
       alarmSound.loop = true; // Alarm berbunyi terus sampai dimatikan
       alarmSound.play().catch(err => console.log("Audio play error:", err));
@@ -87,6 +107,21 @@ function stopAlarmModal() {
   alarmSound.currentTime = 0;
   const alarmModalElem = document.getElementById("alarmModal");
   if (alarmModalElem) alarmModalElem.classList.remove("active");
+}
+function stopAlarmModal() {
+  alarmSound.pause();        // Hentikan suara alarm
+  alarmSound.currentTime = 0; // Kembalikan ke detik awal
+  
+  // Hentikan pengulangan getar
+  if (alarmInterval) {
+    clearInterval(alarmInterval);
+    alarmInterval = null;
+  }
+  if ("vibrate" in navigator) {
+    navigator.vibrate(0); // Matikan getaran secara paksa
+  }
+
+  document.getElementById("alarmModal").classList.remove("active");
 }
 function stopAlarmModal() {
   alarmSound.pause();
