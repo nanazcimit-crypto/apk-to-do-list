@@ -103,32 +103,25 @@ function showAlarmModal(title) {
 }
 
 function stopAlarmModal() {
+  // 1. Hentikan suara alarm & kembalikan ke awal
   alarmSound.pause();
   alarmSound.currentTime = 0;
-  const alarmModalElem = document.getElementById("alarmModal");
-  if (alarmModalElem) alarmModalElem.classList.remove("active");
-}
-function stopAlarmModal() {
-  alarmSound.pause();        // Hentikan suara alarm
-  alarmSound.currentTime = 0; // Kembalikan ke detik awal
-  
-  // Hentikan pengulangan getar
+  alarmSound.loop = false; // Matikan juga loop-nya
+
+  // 2. Hentikan pengulangan getar (Interval)
   if (alarmInterval) {
     clearInterval(alarmInterval);
     alarmInterval = null;
   }
+
+  // 3. Matikan getaran secara paksa
   if ("vibrate" in navigator) {
-    navigator.vibrate(0); // Matikan getaran secara paksa
+    navigator.vibrate(0);
   }
 
+  // 4. Tutup jendela pop-up modal di layar
   document.getElementById("alarmModal").classList.remove("active");
 }
-function stopAlarmModal() {
-  alarmSound.pause();
-  alarmSound.currentTime = 0;
-  document.getElementById("alarmModal").classList.remove("active");
-}
-
 // Beralih Tampilan khusus Pengguna HP (via Tombol Header Atas)
 function toggleMobileView() {
   if (currentView === "dashboard") {
