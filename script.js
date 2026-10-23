@@ -32,7 +32,6 @@ if (notificationButton) {
 }
 
 // Cek Reminder Tugas Berkala sesuai Waktu Tenggat
-// Cek Reminder Tugas Berkala sesuai Waktu Tenggat
 function checkTaskReminders() {
   const now = Date.now();
   let changed = false;
@@ -45,28 +44,16 @@ function checkTaskReminders() {
     // Jika waktu tenggat telah tiba
     if (Number.isFinite(reminderTime) && now >= reminderTime) {
       
-      // 1. PICU NOTIFIKASI BILAH ATAS (Service Worker PWA / Browser)
       if ("Notification" in window && Notification.permission === "granted") {
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.ready.then((registration) => {
-            registration.showNotification("⏰ Tenggat Waktu Tugas Tiba!", {
-              body: "Waktunya mengerjakan: " + task.title,
-              tag: "task-" + task.id,
-              icon: "https://cdn-icons-png.flaticon.com/512/3233/3233483.png",
-              badge: "https://cdn-icons-png.flaticon.com/512/3233/3233483.png",
-              vibrate: [600, 200, 600]
-            });
-          });
-        } else {
-          // Fallback Notifikasi Browser Biasa
-          new Notification("⏰ Tenggat Waktu Tugas Tiba!", {
-            body: "Waktunya mengerjakan: " + task.title,
-            tag: "task-" + task.id,
-            icon: "https://cdn-icons-png.flaticon.com/512/3233/3233483.png"
-          });
-        }
-      }
-
+  navigator.serviceWorker.ready.then((registration) => {
+    registration.showNotification("⏰ Tenggat Waktu Tugas Tiba!", {
+      body: "Waktunya mengerjakan: " + task.title,
+      tag: "task-" + task.id,
+      icon: "https://cdn-icons-png.flaticon.com/512/3233/3233483.png",
+      vibrate: [600, 200, 600]
+    });
+  });
+}
       // 2. PICU NOTIFIKASI INTERNAL WEB (Suara Alarm Berulang & Vibrasi HP)
       alarmSound.loop = true; // Alarm berbunyi terus sampai dimatikan
       alarmSound.play().catch(err => console.log("Audio play error:", err));
@@ -497,7 +484,13 @@ function editTask(id) {
     openModal();
   }
 }
-
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then((reg) => console.log('Service Worker aktif!'))
+      .catch((err) => console.log('Pendaftaran SW gagal:', err));
+  });
+}
 // Inisialisasi awal saat halaman dimuat
 loadData();
 checkTaskReminders();
