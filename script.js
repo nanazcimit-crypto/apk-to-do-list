@@ -11,7 +11,6 @@ const notificationButton = document.getElementById("enableNotifications");
 const alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 alarmSound.preload = 'auto';
 
-
 // Minta Izin Notifikasi Browser
 if (notificationButton) {
     notificationButton.addEventListener("click", () => {
@@ -54,12 +53,14 @@ function checkTaskReminders() {
         }).catch(err => console.log("SW Notification error:", err));
       }
 
-      // Picu Notifikasi Internal Web (Suara Alarm Berulang & Vibrasi HP)
+      // 1. PICU SUARA ALARM BERULANG
       alarmSound.loop = true;
       alarmSound.play().catch(err => console.log("Audio play error:", err));
 
+      // 2. PICU GETARAN HP AKTIF BERSAMAAN DENGAN SUARA
       if ("vibrate" in navigator) {
-        navigator.vibrate([600, 200, 600, 200, 600]);
+        // Pola getar berulang/panjang agar terasa seirama dengan alarm
+        navigator.vibrate([500, 250, 500, 250, 500, 250]);
       }
 
       showAlarmModal(task.title);
@@ -72,7 +73,7 @@ function checkTaskReminders() {
   if (changed) saveData();
 }
 
-// FUNGSI KONTROL POP-UP ALARM INTERNAL (Sudah digabung & dibersihkan dari duplikasi)
+// FUNGSI KONTROL POP-UP ALARM INTERNAL
 function showAlarmModal(title) {
   const alarmTitleElem = document.getElementById("alarmTaskTitle");
   const alarmModalElem = document.getElementById("alarmModal");
@@ -82,8 +83,15 @@ function showAlarmModal(title) {
 }
 
 function stopAlarmModal() {
+  // Matikan Suara Alarm
   alarmSound.pause();
   alarmSound.currentTime = 0;
+
+  // MATIKAN GETARAN HP SAAT TOMBOL DIMATIKAN
+  if ("vibrate" in navigator) {
+    navigator.vibrate(0);
+  }
+
   const alarmModalElem = document.getElementById("alarmModal");
   if (alarmModalElem) alarmModalElem.classList.remove("active");
 }
