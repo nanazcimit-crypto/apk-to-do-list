@@ -1,5 +1,7 @@
 let tasks = [], editingId = null;
-let alarmInterval = null; // Untuk menampung interval getar
+let alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+alarmSound.preload = 'auto';
+let alarmInterval = null; // Penampung interval getar
 let searchQuery = "";
 let userProfile = { name: "", email: "" };
 let currentCalendarDate = new Date();
@@ -75,13 +77,23 @@ function checkTaskReminders() {
       // 4. TAMPILKAN JENDELA POP-UP INTERNAL APLIKASI
       showAlarmModal(task.title);
       // 2. PICU NOTIFIKASI INTERNAL WEB (Suara Alarm Berulang & Vibrasi HP)
-      alarmSound.loop = true; // Alarm berbunyi terus sampai dimatikan
+     // Mainkan Suara
+      alarmSound.loop = true;
       alarmSound.play().catch(err => console.log("Audio play error:", err));
 
+      // Jalankan Getar Berulang
       if ("vibrate" in navigator) {
-        navigator.vibrate([600, 200, 600, 200, 600]);
+        if (alarmInterval !== null) clearInterval(alarmInterval); // Bersihkan dulu kalau ada sisa
+        
+        navigator.vibrate([500, 200, 500, 800]); // Getar awal
+        alarmInterval = setInterval(() => {
+          navigator.vibrate([500, 200, 500, 800]); // Ulangi tiap 2 detik
+        }, 2000);
       }
 
+      showAlarmModal(task.title);
+      task.reminderSent = true;
+      changed = true;
       // 3. TAMPILKAN JENDELA POP-UP MODAL INTERNAL DI DALAM WEB
       showAlarmModal(task.title);
 
@@ -103,21 +115,28 @@ function showAlarmModal(title) {
 }
 
 function stopAlarmModal() {
-  // 1. Hentikan suara alarm & kembalikan ke awal
+  // 1. Matikan Suara Alarm
   alarmSound.pause();
   alarmSound.currentTime = 0;
-  alarmSound.loop = false; // Matikan juga loop-nya
+  alarmSound.loop = false; // Matikan loop audio
 
-  // 2. Hentikan pengulangan getar (Interval)
-  if (alarmInterval) {
+  // 2. BERSIHKAN TOTAL INTERVAL GETAR (Penyebab utama getar tidak mau berhenti)
+  if (alarmInterval !== null) {
     clearInterval(alarmInterval);
     alarmInterval = null;
   }
 
-  // 3. Matikan getaran secara paksa
+  // 3. Matikan Getaran secara Paksa lewat API Browser
   if ("vibrate" in navigator) {
-    navigator.vibrate(0);
+    navigator.vibrate(0); // Angka 0 berfungsi untuk menghentikan seluruh getaran aktif
   }
+
+  // 4. Sembunyikan Pop-up Modal di Layar
+  const modal = document.getElementById("alarmModal");
+  if (modal) {
+    modal.classList.remove("active");
+  }
+}
 
   // 4. Tutup jendela pop-up modal di layar
   document.getElementById("alarmModal").classList.remove("active");
