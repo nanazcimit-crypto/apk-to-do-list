@@ -32,6 +32,7 @@ if (notificationButton) {
 }
 
 // Cek Reminder Tugas Berkala sesuai Waktu Tenggat
+// Cek Reminder Tugas Berkala sesuai Waktu Tenggat
 function checkTaskReminders() {
   const now = Date.now();
   let changed = false;
@@ -43,16 +44,30 @@ function checkTaskReminders() {
     
     // Jika waktu tenggat telah tiba
     if (Number.isFinite(reminderTime) && now >= reminderTime) {
-      // 1. Munculkan Push Notification Browser (jika diizinkan)
+      
+      // 1. PICU NOTIFIKASI BILAH ATAS (Service Worker PWA / Browser)
       if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("⏰ Tenggat Waktu Tugas Tiba!", {
-          body: "Waktunya mengerjakan: " + task.title,
-          tag: "task-" + task.id,
-          icon: "https://cdn-icons-png.flaticon.com/512/3233/3233483.png"
-        });
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then((registration) => {
+            registration.showNotification("⏰ Tenggat Waktu Tugas Tiba!", {
+              body: "Waktunya mengerjakan: " + task.title,
+              tag: "task-" + task.id,
+              icon: "https://cdn-icons-png.flaticon.com/512/3233/3233483.png",
+              badge: "https://cdn-icons-png.flaticon.com/512/3233/3233483.png",
+              vibrate: [600, 200, 600]
+            });
+          });
+        } else {
+          // Fallback Notifikasi Browser Biasa
+          new Notification("⏰ Tenggat Waktu Tugas Tiba!", {
+            body: "Waktunya mengerjakan: " + task.title,
+            tag: "task-" + task.id,
+            icon: "https://cdn-icons-png.flaticon.com/512/3233/3233483.png"
+          });
+        }
       }
 
-      // 2. Mainkan Suara Alarm & Getar
+      // 2. PICU NOTIFIKASI INTERNAL WEB (Suara Alarm Berulang & Vibrasi HP)
       alarmSound.loop = true; // Alarm berbunyi terus sampai dimatikan
       alarmSound.play().catch(err => console.log("Audio play error:", err));
 
@@ -60,7 +75,7 @@ function checkTaskReminders() {
         navigator.vibrate([600, 200, 600, 200, 600]);
       }
 
-      // 3. TAMPILKAN JENDELA POP-UP INTERNAL APLIKASI
+      // 3. TAMPILKAN JENDELA POP-UP MODAL INTERNAL DI DALAM WEB
       showAlarmModal(task.title);
 
       task.reminderSent = true;
@@ -71,12 +86,21 @@ function checkTaskReminders() {
   if (changed) saveData();
 }
 
-// FUNGSI UNTUK MEMUNCULKAN DAN MEMATIKAN POP-UP ALARM
+// FUNGSI KONTROL POP-UP ALARM INTERNAL
 function showAlarmModal(title) {
-  document.getElementById("alarmTaskTitle").textContent = title;
-  document.getElementById("alarmModal").classList.add("active");
+  const alarmTitleElem = document.getElementById("alarmTaskTitle");
+  const alarmModalElem = document.getElementById("alarmModal");
+  
+  if (alarmTitleElem) alarmTitleElem.textContent = title;
+  if (alarmModalElem) alarmModalElem.classList.add("active");
 }
 
+function stopAlarmModal() {
+  alarmSound.pause();
+  alarmSound.currentTime = 0;
+  const alarmModalElem = document.getElementById("alarmModal");
+  if (alarmModalElem) alarmModalElem.classList.remove("active");
+}
 function stopAlarmModal() {
   alarmSound.pause();
   alarmSound.currentTime = 0;
