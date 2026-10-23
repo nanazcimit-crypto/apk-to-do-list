@@ -12,15 +12,13 @@ const alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2
 alarmSound.preload = 'auto';
 
 // Minta Izin Notifikasi Browser
-// Aktifkan Notifikasi, Suara, dan Getaran (Aman untuk WebView Android / Kodular)
 if (notificationButton) {
     notificationButton.addEventListener("click", () => {
         try {
-            // Langsung aktifkan alarm suara dan getar internal TaskKita tanpa memanggil browser notification API
             alarmSound.play().catch(() => {});
             
             if ("vibrate" in navigator) {
-                navigator.vibrate([200, 100, 200]); // Efek getar HP
+                navigator.vibrate([200, 100, 200]);
             }
             
             notificationButton.title = "Notifikasi & Getaran Aktif";
@@ -41,28 +39,28 @@ function checkTaskReminders() {
 
     const reminderTime = new Date(task.reminderAt).getTime();
     
-    // Jika waktu tenggat telah tiba
     if (Number.isFinite(reminderTime) && now >= reminderTime) {
-      
-      if ("Notification" in window && Notification.permission === "granted") {
-  navigator.serviceWorker.ready.then((registration) => {
-    registration.showNotification("⏰ Tenggat Waktu Tugas Tiba!", {
-      body: "Waktunya mengerjakan: " + task.title,
-      tag: "task-" + task.id,
-      icon: "https://cdn-icons-png.flaticon.com/512/3233/3233483.png",
-      vibrate: [600, 200, 600]
-    });
-  });
-}
-      // 2. PICU NOTIFIKASI INTERNAL WEB (Suara Alarm Berulang & Vibrasi HP)
-      alarmSound.loop = true; // Alarm berbunyi terus sampai dimatikan
+      if ("Notification" in window && Notification.permission === "granted" && "serviceWorker" in navigator) {
+        navigator.serviceWorker.ready.then((registration) => {
+          if (registration && registration.showNotification) {
+            registration.showNotification("⏰ Tenggat Waktu Tugas Tiba!", {
+              body: "Waktunya mengerjakan: " + task.title,
+              tag: "task-" + task.id,
+              icon: "https://cdn-icons-png.flaticon.com/512/3233/3233483.png",
+              vibrate: [600, 200, 600]
+            });
+          }
+        }).catch(err => console.log("SW Notification error:", err));
+      }
+
+      // Picu Notifikasi Internal Web (Suara Alarm Berulang & Vibrasi HP)
+      alarmSound.loop = true;
       alarmSound.play().catch(err => console.log("Audio play error:", err));
 
       if ("vibrate" in navigator) {
         navigator.vibrate([600, 200, 600, 200, 600]);
       }
 
-      // 3. TAMPILKAN JENDELA POP-UP MODAL INTERNAL DI DALAM WEB
       showAlarmModal(task.title);
 
       task.reminderSent = true;
@@ -73,7 +71,7 @@ function checkTaskReminders() {
   if (changed) saveData();
 }
 
-// FUNGSI KONTROL POP-UP ALARM INTERNAL
+// FUNGSI KONTROL POP-UP ALARM INTERNAL (Sudah digabung & dibersihkan dari duplikasi)
 function showAlarmModal(title) {
   const alarmTitleElem = document.getElementById("alarmTaskTitle");
   const alarmModalElem = document.getElementById("alarmModal");
@@ -87,11 +85,6 @@ function stopAlarmModal() {
   alarmSound.currentTime = 0;
   const alarmModalElem = document.getElementById("alarmModal");
   if (alarmModalElem) alarmModalElem.classList.remove("active");
-}
-function stopAlarmModal() {
-  alarmSound.pause();
-  alarmSound.currentTime = 0;
-  document.getElementById("alarmModal").classList.remove("active");
 }
 
 // Beralih Tampilan khusus Pengguna HP (via Tombol Header Atas)
@@ -117,14 +110,14 @@ function switchView(viewName) {
     calendarView.classList.add('active');
     if (navDashboard) navDashboard.classList.remove('active');
     if (navCalendar) navCalendar.classList.add('active');
-    if (viewToggleIcon) viewToggleIcon.className = "fas fa-list-ul"; // Ubah ikon ke daftar
+    if (viewToggleIcon) viewToggleIcon.className = "fas fa-list-ul";
     renderCalendar();
   } else {
     calendarView.classList.remove('active');
     listView.style.display = 'block';
     if (navCalendar) navCalendar.classList.remove('active');
     if (navDashboard) navDashboard.classList.add('active');
-    if (viewToggleIcon) viewToggleIcon.className = "fas fa-calendar-alt"; // Ubah ikon ke kalender
+    if (viewToggleIcon) viewToggleIcon.className = "fas fa-calendar-alt";
   }
 }
 
@@ -135,14 +128,15 @@ function toggleDarkMode() {
   localStorage.setItem("taskkita_darkmode", isDark ? "true" : "false");
   
   const icon = document.getElementById("darkModeIcon");
-  icon.className = isDark ? "fas fa-sun" : "fas fa-moon";
+  if (icon) icon.className = isDark ? "fas fa-sun" : "fas fa-moon";
 }
 
 function loadDarkModePreference() {
   const isDark = localStorage.getItem("taskkita_darkmode") === "true";
+  const icon = document.getElementById("darkModeIcon");
   if (isDark) {
     document.body.classList.add("dark-mode");
-    document.getElementById("darkModeIcon").className = "fas fa-sun";
+    if (icon) icon.className = "fas fa-sun";
   }
 }
 
@@ -162,10 +156,12 @@ function loadData() {
 
   if (savedProfile) {
     userProfile = JSON.parse(savedProfile);
-    document.getElementById("loginOverlay").classList.add("hidden");
+    const loginOverlay = document.getElementById("loginOverlay");
+    if (loginOverlay) loginOverlay.classList.add("hidden");
     applyProfileData();
   } else {
-    document.getElementById("loginOverlay").classList.remove("hidden");
+    const loginOverlay = document.getElementById("loginOverlay");
+    if (loginOverlay) loginOverlay.classList.remove("hidden");
   }
 
   updateGreeting();
@@ -187,25 +183,17 @@ function handleLogin(e) {
   updateGreeting();
   renderTasks();
 }
-function handleLogout() {
-    if (confirm("Apakah Anda yakin ingin keluar dari akun ini?")) {
-        // Hapus data sesi profil dari localStorage
-        localStorage.removeItem("taskkita_profile");
-        
-        // Reset variabel global profil
-        userProfile = { name: "", email: "" };
-        
-        // Tutup modal profil jika sedang terbuka
-        closeProfileModal();
-        
-        // Tampilkan kembali overlay login
-        document.getElementById("loginOverlay").classList.remove("hidden");
-        
-        // Reset form login
-        document.getElementById("loginForm").reset();
-    }
 
-      }
+function handleLogout() {
+  if (confirm("Apakah Anda yakin ingin keluar dari akun ini?")) {
+    localStorage.removeItem("taskkita_profile");
+    userProfile = { name: "", email: "" };
+    closeProfileModal();
+    document.getElementById("loginOverlay").classList.remove("hidden");
+    document.getElementById("loginForm").reset();
+  }
+}
+
 function applyProfileData() {
   document.getElementById("profileNameInput").value = userProfile.name;
   document.getElementById("profileEmailInput").value = userProfile.email;
@@ -223,7 +211,8 @@ function updateGreeting() {
   else if (hour >= 18) greet = "Selamat Malam";
   
   const firstName = userProfile.name ? userProfile.name.split(" ")[0] : "Sobat";
-  document.getElementById("greeting").textContent = `${greet}, ${firstName}`;
+  const greetingElem = document.getElementById("greeting");
+  if (greetingElem) greetingElem.textContent = `${greet}, ${firstName}`;
 }
 
 function saveData() {
@@ -334,6 +323,7 @@ function renderTasks() {
 
 function renderCalendar() {
   const grid = document.getElementById("calendarGrid");
+  if (!grid) return;
   grid.innerHTML = "";
 
   const year = currentCalendarDate.getFullYear();
@@ -432,15 +422,18 @@ document.getElementById("taskForm").addEventListener("submit", (e) => {
   const priority = document.getElementById("taskPriority").value;
   const reminderAt = reminderInput.value;
 
-  if (!title || !reminderAt) {
-    alert("Harap isi judul tugas dan waktu reminder.");
+  if (!title) {
+    alert("Harap isi judul tugas.");
     return;
   }
 
-  const reminderTime = new Date(reminderAt).getTime();
-  if (!Number.isFinite(reminderTime) || reminderTime <= Date.now()) {
-    alert("Pilih waktu reminder yang akan datang.");
-    return;
+  let reminderTime = null;
+  if (reminderAt) {
+    reminderTime = new Date(reminderAt).getTime();
+    if (!Number.isFinite(reminderTime) || reminderTime <= Date.now()) {
+      alert("Pilih waktu reminder yang akan datang.");
+      return;
+    }
   }
 
   if (editingId !== null) {
@@ -484,6 +477,7 @@ function editTask(id) {
     openModal();
   }
 }
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -491,6 +485,7 @@ if ('serviceWorker' in navigator) {
       .catch((err) => console.log('Pendaftaran SW gagal:', err));
   });
 }
+
 // Inisialisasi awal saat halaman dimuat
 loadData();
 checkTaskReminders();
